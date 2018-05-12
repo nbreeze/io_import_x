@@ -121,6 +121,11 @@ class ImportX(bpy.types.Operator, ImportHelper):
             description="Surround smooth groups by sharp edges",
             default=True,
             )
+    do_not_add_unused_material = BoolProperty(
+        name="Don't add unused materials",
+        description="Do not add unused materials.",
+        default=False,
+    )
 
     use_split_objects = BoolProperty(
             name="Object",
@@ -239,6 +244,11 @@ class ImportX(bpy.types.Operator, ImportHelper):
         col.label('Source Orientation :')      
         col.prop(self, "axis_forward")
         col.prop(self, "axis_up")
+
+        box = layout.box()
+        col = box.column(align=True)
+        col.label("Option 1")
+        col.prop(self, "do_not_add_unused_material")
 
         # naming methods box
         box = layout.box()

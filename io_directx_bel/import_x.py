@@ -63,6 +63,7 @@ def load(operator, context, filepath, files,
          show_tree=False,
          show_templates=False,
          show_geninfo=False,
+         do_not_add_unused_material=False,
          quickmode=False,
          parented=False,
          bone_maxlength=1.0,
@@ -784,25 +785,43 @@ BINARY FORMAT
 
                 if debug: print('facemats : %s' % (len(facemats)))
 
+                # length does not match (could be tuned more, need more cases)
+                if len(facemats) != len(faces):
+                    facemats = [facemats[0] for i in faces]
+
                 # mat can exist but with no datas so we prepare the mat slot
                 # with dummy ones
-                for slot in range(nbslots) :
+                for slot in range(nbslots) if not do_not_add_unused_material else range(len(list(set(facemats)))):
                     matslots.append('dXnoname%s' % slot)
 
-                # length does not match (could be tuned more, need more cases)
-                if len(facemats) != len(faces) :
-                    facemats = [ facemats[0] for i in faces ]
+                if debug: print(matslots)
+
+                # Table of convert face material index to blender material slot
+                materials_slot_dictionary = {}
 
                 # seek for materials then textures if any mapped in this mesh.
                 # no type test, only one option type in token meshmateriallist : 'Material'
-                for slotid, matname in enumerate(getChilds(childname)) :
+                for slot_index, mat_name in enumerate(getChilds(childname)):
+
+                    if do_not_add_unused_material:
+                        if slot_index in facemats:
+                            materials_slot_dictionary.update({slot_index: len(materials_slot_dictionary)})
+                        else:
+                            # Omit unused material tokens
+                            if naming_method != 1:
+                                (_diffuse_color, _alpha), _power, _specCol, _emitCol = readToken(mat_name)
+                                for tex_name in getChilds(mat_name):
+                                    [_filename] = readToken(tex_name)
+                            continue
+
+                    slot_id = slot_index if not do_not_add_unused_material else materials_slot_dictionary[slot_index]
 
                     # rename dummy mats with the right name
-                    matslots[slotid] = matname
+                    matslots[slot_id] = mat_name
 
                     # blender material creation (need tuning)
-                    mat = bel.material.new(matname,naming_method)
-                    matslots[slotid] = mat.name
+                    mat = bel.material.new(mat_name, naming_method)
+                    matslots[slot_id] = mat.name
 
                     if naming_method != 1:
                         # print('matname : %s'%matname)
@@ -892,11 +911,19 @@ BINARY FORMAT
                                     tex_slot.normal_factor = 1.0
                                     tex_slot.bump_method = "BUMP_BEST_QUALITY"
 
+                        # mat.name = first_texture_name
+                        # first_texture_name = ""
+
+                facemats = [materials_slot_dictionary[i] for i in facemats]
+
                 # create remaining dummy mat
-                for slotid, matname in enumerate(matslots) :
-                    if matname not in bpy.data.materials :
-                        mat = bel.material.new(matname,naming_method)
-                        matslots[slotid] = mat.name
+                if debug: print(matslots)
+                for slot_index, mat_name in enumerate(matslots):
+                    if mat_name not in bpy.data.materials:
+                        mat = bel.material.new(mat_name, naming_method)
+                        #slot_id = slot_index if not do_not_add_unused_material else materials_slot_dictionary[
+                        #    slot_index]
+                        matslots[slot_index] = mat.name
 
                 if debug: print('matslots : %s' % matslots)
 
