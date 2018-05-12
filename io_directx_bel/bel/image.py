@@ -41,7 +41,7 @@ def new(path, name=False, relative = True, premul = True) :
     # finally :
     img = bpy.data.images.load(filepath=path)
     img.name = name
-    img.use_premultiply = premul
+    img.alpha_mode = 'PREMUL' if premul == True else 'STRAIGHT'
     return img
 
 
