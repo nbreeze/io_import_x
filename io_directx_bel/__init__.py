@@ -27,6 +27,7 @@ from bpy.props import (BoolProperty,
                        FloatProperty,
                        StringProperty,
                        EnumProperty,
+                       CollectionProperty
                        )
 from bpy_extras.io_utils import (ExportHelper,
                                  ImportHelper,
@@ -41,6 +42,8 @@ class ImportX(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.x"
     bl_label = "Import X"
     bl_options = {'PRESET', 'UNDO'}
+
+    files = CollectionProperty(type=bpy.types.PropertyGroup)
 
     filename_ext = ".x"
     filter_glob = StringProperty(
@@ -205,9 +208,10 @@ class ImportX(bpy.types.Operator, ImportHelper):
 
     
         bel.fs.saveOptions(self,'import_scene.x', self.as_keywords(ignore=(
-                                            "filter_glob",
-                                            "filepath",
-                                            )))
+            "filter_glob",
+            "filepath",
+            "files"
+        )))
         return import_x.load(self, context, **keywords)
 
     def draw(self, context):

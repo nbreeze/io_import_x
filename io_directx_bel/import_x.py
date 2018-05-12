@@ -58,7 +58,7 @@ imp.reload(bel.uv)
 
 ###################################################
 
-def load(operator, context, filepath,
+def load(operator, context, filepath, files,
          global_clamp_size=0.0,
          show_tree=False,
          show_templates=False,
@@ -612,7 +612,7 @@ BINARY FORMAT
             return arm
         return bone
     
-    def import_dXtree(field,lvl=0) :
+    def import_dXtree(field, file, lvl=0):
         tab = ' '*lvl*2
         if field == [] : 
             if show_geninfo : print('%s>> no childs, return False'%(tab))
@@ -646,6 +646,7 @@ BINARY FORMAT
                 else : parentname = tokenname
                 
                 ob = getMesh(parentname,tokenname)
+                ob.name = file
                 obs.append(ob)
 
                 if show_geninfo : print('%smesh : %s'%(tab,tokenname))
@@ -758,36 +759,36 @@ BINARY FORMAT
         groupindices = []
         groupweights = []
 
-        nVerts, verts, nFaces, faces = readToken(tokenname) 
+        nVerts, verts, nFaces, faces = readToken(tokenname)
 
-        if debug :
-            print('verts    : %s %s\nfaces    : %s %s'%(nVerts, len(verts),nFaces, len(faces)))
-        
-        #for childname in token['childs'] :
-        for childname in getChilds(tokenname) :
-            
+        if debug:
+            print('verts    : %s %s\nfaces    : %s %s' % (nVerts, len(verts), nFaces, len(faces)))
+
+        # for childname in token['childs'] :
+        for childname in getChilds(tokenname):
+
             tokentype = tokens[childname]['type']
-            
+
             # UV
-            if tokentype == 'meshtexturecoords' :
+            if tokentype == 'meshtexturecoords':
                 uv = readToken(childname)
-                #uv = bel.uv.asVertsLocation(uv, faces)
+                # uv = bel.uv.asVertsLocation(uv, faces)
                 uv = bel.uv.asFlatList(uv, faces)
                 uvs.append(uv)
-                
-                if debug : print('uv       : %s'%(len(uv)))
-            
+
+                if debug: print('uv       : %s' % (len(uv)))
+
             # MATERIALS
-            elif tokentype == 'meshmateriallist' :
+            elif tokentype == 'meshmateriallist':
                 nbslots, facemats = readToken(childname)
-                
-                if debug : print('facemats : %s'%(len(facemats)))
-                
+
+                if debug: print('facemats : %s' % (len(facemats)))
+
                 # mat can exist but with no datas so we prepare the mat slot
                 # with dummy ones
                 for slot in range(nbslots) :
-                    matslots.append('dXnoname%s'%slot )
-        
+                    matslots.append('dXnoname%s' % slot)
+
                 # length does not match (could be tuned more, need more cases)
                 if len(facemats) != len(faces) :
                     facemats = [ facemats[0] for i in faces ]
@@ -795,33 +796,33 @@ BINARY FORMAT
                 # seek for materials then textures if any mapped in this mesh.
                 # no type test, only one option type in token meshmateriallist : 'Material'
                 for slotid, matname in enumerate(getChilds(childname)) :
-                    
+
                     # rename dummy mats with the right name
                     matslots[slotid] = matname
 
                     # blender material creation (need tuning)
                     mat = bel.material.new(matname,naming_method)
                     matslots[slotid] = mat.name
-                    
-                    if naming_method != 1 :
-                        #print('matname : %s'%matname)
+
+                    if naming_method != 1:
+                        # print('matname : %s'%matname)
                         (diffuse_color,alpha), power, specCol, emitCol = readToken(matname)
-                        #if debug : print(diffuse_color,alpha, power, specCol, emitCol)
+                        # if debug : print(diffuse_color,alpha, power, specCol, emitCol)
                         mat.diffuse_color = diffuse_color
                         mat.diffuse_intensity = power
                         mat.specular_color = specCol
                         # dX emit don't use diffuse color but is a color itself
                         # convert it to a kind of intensity 
-                        mat.emit = (emitCol[0] + emitCol[1] + emitCol[2] ) / 3
-                        
-                        if alpha != 1.0 :
+                        mat.emit = (emitCol[0] + emitCol[1] + emitCol[2]) / 3
+
+                        if alpha != 1.0:
                             mat.use_transparency = True
                             mat.transparency_method = 'Z_TRANSPARENCY'
                             mat.alpha = alpha
                             mat.specular_alpha = 0
                             transp = True
                         else : transp = False
-            
+
                         # texture
                         # only 'TextureFilename' can be here, no type test
                         # textures have no name in .x so we build 
@@ -829,33 +830,33 @@ BINARY FORMAT
                         # bdata texture slot name = bdata image name
                         btexnames = []
                         for texname in getChilds(matname) :
-                            
-                            # create/rename/reuse etc corresponding data image
-                            # (returns False if not found)
+
+                                # create/rename/reuse etc corresponding data image
+                                # (returns False if not found)
                             [filename] = readToken(texname)
-                            img = bel.image.new(path+'/'+filename)
-                            
+                                img = bel.image.new(path + '/' + filename)
+
                             if img == False :
                                 imgname = 'not_found'
-                            else :
+                                else:
                                 imgname = img.name
-                                
-                            #print('texname : %s'%texname)
-                            #print('filename : %s'%filename)
-                            #print('btex/img name : %s'%imgname)
-                            
-                            # associated texture (no naming check.. maybe tune more)
-                            # tex and texslot are created even if img not found
+
+                                # print('texname : %s'%texname)
+                                # print('filename : %s'%filename)
+                                # print('btex/img name : %s'%imgname)
+
+                                # associated texture (no naming check.. maybe tune more)
+                                # tex and texslot are created even if img not found
                             if imgname in bpy.data.textures and ( img == False or bpy.data.textures[imgname].image == img ) :
                                 tex = bpy.data.textures[imgname]
-                            else :
+                                else:
                                 tex = bpy.data.textures.new(name=imgname,type='IMAGE')
-                                if img : tex.image = img
-                                
-                            tex.use_alpha = transp
-                            tex.use_preview_alpha = transp
-                                
-                            # then create texture slot
+                                    if img: tex.image = img
+
+                                tex.use_alpha = transp
+                                tex.use_preview_alpha = transp
+
+                                # then create texture slot
                             texslot = mat.texture_slots.create(index=0)
                             texslot.texture = tex
                             texslot.texture_coords = 'UV'
@@ -868,104 +869,107 @@ BINARY FORMAT
                     if matname not in bpy.data.materials :
                         mat = bel.material.new(matname,naming_method)
                         matslots[slotid] = mat.name
-                        
-                if debug : print('matslots : %s'%matslots)
-                
+
+                if debug: print('matslots : %s' % matslots)
+
             # VERTICES GROUPS/WEIGHTS
-            elif tokentype == 'skinweights' :
+            elif tokentype == 'skinweights':
                 groupname, nverts, vindices, vweights, mat = readToken(childname)
                 groupname = namelookup[groupname]
-                if debug : 
+                if debug:
                     print('vgroup    : %s (%s/%s verts) %s'%(groupname,len(vindices),len(vweights),'bone' if groupname in tokens else ''))
 
-                #if debug : print('matrix : %s\n%s'%(type(mat),mat))
-                
+                # if debug : print('matrix : %s\n%s'%(type(mat),mat))
+
                 groupnames.append(groupname)
                 groupindices.append(vindices)
                 groupweights.append(vweights)
-                
-        ob = bel.mesh.write(obname,tokenname, 
-                            verts, edges, faces, 
-                            matslots, facemats, uvs, 
+
+        ob = bel.mesh.write(obname, tokenname,
+                            verts, edges, faces,
+                            matslots, facemats, uvs,
                             groupnames, groupindices, groupweights,
                             use_smooth_groups,
                             naming_method)
-        
+
         return ob
-                           
+
     ## here we go
-     
-    file = os.path.basename(filepath)
-    
-    print('\nimporting %s...'%file)
-    start = time.clock()
-    path = os.path.dirname(filepath)
-    filepath = os.fsencode(filepath)
-    data = open(filepath,'rb')
-    header = dXheader(data)
 
-    if global_matrix is None:
-        global_matrix = mathutils.Matrix()
+    x_file_dir = os.path.dirname(filepath)
 
-    if header :
-        minor, major, format, accuracy = header
-        
-        if show_geninfo :
-            print('\n%s directX header'%file)
-            print('  minor  : %s'%(minor))
-            print('  major  : %s'%(major))
-            print('  format : %s'%(format))
-            print('  floats are %s bits'%(accuracy))
+    for item_file in files:
+        item_file_path = (os.path.join(x_file_dir, item_file.name))
 
-        if format in [ 'txt' ] : #, 'bin' ] :
+        print('\nimporting %s...' % item_file.name)
+        start = time.clock()
+        path = os.path.dirname(item_file_path)
+        item_file_path = os.fsencode(item_file_path)
+        with open(item_file_path, 'rb') as data:
+            header = dXheader(data)
 
-            ## FILE READ : STEP 1 : STRUCTURE
-            if show_geninfo : print('\nBuilding internal .x tree')
-            t = time.clock()
-            tokens, templates, tokentypes = dXtree(data,quickmode)
-            readstruct_time = time.clock()-t
-            if show_geninfo : print('builded tree in %.2f\''%(readstruct_time)) # ,end='\r')
+            if global_matrix is None:
+                global_matrix = mathutils.Matrix()
 
-            ## populate templates with datas
-            for tplname in templates :
-                readTemplate(data,tplname,show_templates)
+            if header:
+                minor, major, format, accuracy = header
 
-            ## DATA TREE CHECK
-            if show_tree :
-                print('\nDirectX Data Tree :\n')
-                walk_dXtree(tokens.keys())
-            
-            ## DATA IMPORTATION
-            if show_geninfo : 
-                #print(tokens)
-                print('Root frames :\n %s'%rootTokens)
-            if parented :
-                import_dXtree(rootTokens)
-            else :
-                for tokenname in tokentypes['mesh'] :
-                    obname = tokens[tokenname]['parent']
-                    # object and mesh naming :
-                    # if parent frame has several meshes : obname = meshname = mesh token name,
-                    # if parent frame has only one mesh  : obname = parent frame name, meshname =  mesh token name.
-                    if obname :
-                        meshcount = 0
-                        for child in getChilds(obname) :
-                            if tokens[child]['type'] == 'mesh' : 
-                                meshcount += 1
-                                if meshcount == 2 :
-                                    obname = tokenname
-                                    break
-                    else : obname = tokenname
+                if show_geninfo:
+                    print('\n%s directX header' % item_file.name)
+                    print('  minor  : %s' % (minor))
+                    print('  major  : %s' % (major))
+                    print('  format : %s' % (format))
+                    print('  floats are %s bits' % (accuracy))
 
-                    ob = getMesh(obname,tokenname,show_geninfo)
-                    ob.matrix_world = global_matrix
-                    
-            print('done in %.2f\''%(time.clock()-start)) # ,end='\r')
-            
-        else :
-            print('only .x files in text format are currently supported')
-            print('please share your file to make the importer evolve')
+                if format in ['txt']:  # , 'bin' ] :
 
+                    ## FILE READ : STEP 1 : STRUCTURE
+                    if show_geninfo: print('\nBuilding internal .x tree')
+                    t = time.clock()
+                    tokens, templates, tokentypes = dXtree(data, quickmode)
+                    readstruct_time = time.clock() - t
+                    if show_geninfo: print('builded tree in %.2f\'' % (readstruct_time))  # ,end='\r')
 
-        return {'FINISHED'}
-        
+                    ## populate templates with datas
+                    for tplname in templates:
+                        readTemplate(data, tplname, show_templates)
+
+                    ## DATA TREE CHECK
+                    if show_tree:
+                        print('\nDirectX Data Tree :\n')
+                        walk_dXtree(tokens.keys())
+
+                    ## DATA IMPORTATION
+                    if show_geninfo:
+                        # print(tokens)
+                        print('Root frames :\n %s' % rootTokens)
+                    if parented:
+                        import_dXtree(rootTokens, item_file.name)
+                    else:
+                        for tokenname in tokentypes['mesh']:
+                            obname = tokens[tokenname]['parent']
+                            # object and mesh naming :
+                            # if parent frame has several meshes : obname = meshname = mesh token name,
+                            # if parent frame has only one mesh  : obname = parent frame name, meshname =  mesh token name.
+                            if obname:
+                                meshcount = 0
+                                for child in getChilds(obname):
+                                    if tokens[child]['type'] == 'mesh':
+                                        meshcount += 1
+                                        if meshcount == 2:
+                                            obname = tokenname
+                                            break
+                            else:
+                                obname = tokenname
+
+                            ob = getMesh(obname, tokenname, show_geninfo)
+                            ob.matrix_world = global_matrix
+
+                    print('done in %.2f\'' % (time.clock() - start))  # ,end='\r')
+
+                else:
+                    print('only .x files in text format are currently supported')
+                    print('please share your file to make the importer evolve')
+        rootTokens = []
+
+    return {'FINISHED'}
