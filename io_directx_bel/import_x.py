@@ -829,17 +829,39 @@ BINARY FORMAT
                         # image and texture names from the image file name
                         # bdata texture slot name = bdata image name
                         btexnames = []
-                        for texname in getChilds(matname) :
+                        first_texture_name = ""
+                        for tex_name in getChilds(mat_name):
+                            [filename] = readToken(tex_name)
+                            TEXTURE = 0
+                            NORMALS = 1
+                            for tex_norm in [TEXTURE, NORMALS]:
+                                if tex_norm == NORMALS:
+                                    # search to normals file (that name of texture file with postfix "_normal")
+                                    f = filename.rsplit(".", 1)
+                                    f.insert(-1, "_normal")
+                                    norm_file = "".join(f[0:len(f) - 1])
+                                    exist_flag = False
+                                    for ext in ["jpg", "jpeg", "png", "bmp"]:
+                                        nrm = norm_file + "." + ext
+                                        if os.path.exists(path + "/" + nrm):
+                                            filename = nrm
+                                            exist_flag = True
+                                            break
+                                    if exist_flag is False:
+                                        break
 
                                 # create/rename/reuse etc corresponding data image
                                 # (returns False if not found)
-                            [filename] = readToken(texname)
+                                if show_geninfo: print(path + "/" + filename)
                                 img = bel.image.new(path + '/' + filename)
 
-                            if img == False :
-                                imgname = 'not_found'
+                                if not img:
+                                    img_name = 'not_found'
                                 else:
-                                imgname = img.name
+                                    img_name = img.name
+
+                                if first_texture_name == "":
+                                    first_texture_name = img_name
 
                                 # print('texname : %s'%texname)
                                 # print('filename : %s'%filename)
@@ -847,22 +869,28 @@ BINARY FORMAT
 
                                 # associated texture (no naming check.. maybe tune more)
                                 # tex and texslot are created even if img not found
-                            if imgname in bpy.data.textures and ( img == False or bpy.data.textures[imgname].image == img ) :
-                                tex = bpy.data.textures[imgname]
+                                if img_name in bpy.data.textures and (
+                                        img == False or bpy.data.textures[img_name].image == img):
+                                    tex = bpy.data.textures[img_name]
                                 else:
-                                tex = bpy.data.textures.new(name=imgname,type='IMAGE')
+                                    tex = bpy.data.textures.new(name=img_name, type='IMAGE')
                                     if img: tex.image = img
 
                                 tex.use_alpha = transp
                                 tex.use_preview_alpha = transp
 
                                 # then create texture slot
-                            texslot = mat.texture_slots.create(index=0)
-                            texslot.texture = tex
-                            texslot.texture_coords = 'UV'
-                            texslot.uv_layer = 'UV0'
-                            texslot.use_map_alpha = transp
-                            texslot.alpha_factor = alpha
+                                tex_slot = mat.texture_slots.create(index=tex_norm)
+                                tex_slot.texture = tex
+                                tex_slot.texture_coords = 'UV'
+                                tex_slot.uv_layer = 'UV0'
+                                tex_slot.use_map_alpha = transp
+                                tex_slot.alpha_factor = alpha
+                                if tex_norm == NORMALS:
+                                    tex_slot.use_map_color_diffuse = False
+                                    tex_slot.use_map_normal = True
+                                    tex_slot.normal_factor = 1.0
+                                    tex_slot.bump_method = "BUMP_BEST_QUALITY"
 
                 # create remaining dummy mat
                 for slotid, matname in enumerate(matslots) :
