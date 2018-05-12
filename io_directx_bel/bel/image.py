@@ -6,37 +6,39 @@ from . import fs
 
 debuglevel = 0
 
-def dprint(str,l=2) :
-    if l <= debuglevel :
+
+def dprint(str, l=2):
+    if l <= debuglevel:
         print(str)
+
 
 # create or retrieve a bdata image
 # given its path 
-def new(path, name=False, relative = True, premul = True) :
+def new(path, name=False, relative=True, premul=True):
     path = fs.clean(path)
     # check file
-    if fs.isfile(path) == False :
+    if fs.isfile(path) == False:
         dprint('Texture image not found')
         return False
 
-    if relative :
-        try :
+    if relative:
+        try:
             path = bpy.path.relpath(path)
             path = fs.clean(path)
-        except : 
+        except:
             print('cant turn path into relative one (.blend and img path drive letters ?) ')
-        
+
     # retrieve paths to image file from existing image slot
     # returns img if paths match
-    for img in bpy.data.images :
-        if img.filepath != '' :
-            if bpy.path.abspath(path) == bpy.path.abspath(fs.clean(img.filepath)) :
+    for img in bpy.data.images:
+        if img.filepath != '':
+            if bpy.path.abspath(path) == bpy.path.abspath(fs.clean(img.filepath)):
                 return img
 
     # create a unique name in image slot
-    if name == False : 
+    if name == False:
         name = bpy.path.basename(path)
-    name = bel.bpyname(name,bpy.data.images.keys())
+    name = bel.bpyname(name, bpy.data.images.keys())
 
     # finally :
     img = bpy.data.images.load(filepath=path)
@@ -45,16 +47,15 @@ def new(path, name=False, relative = True, premul = True) :
     return img
 
 
-def applyShader(mat,config) :
-
+def applyShader(mat, config):
     # matslot.link = 'DATA'
-    #mat = bpy.data.materials['Female_Body']
+    # mat = bpy.data.materials['Female_Body']
 
     texslot = mat.texture_slots[0]
     tex = texslot.texture
     img = tex.image
-    
-    #config = shaders[shadername]
+
+    # config = shaders[shadername]
     alpha = True if 'alpha' in config else False
 
     ## MAT
@@ -84,8 +85,8 @@ def applyShader(mat,config) :
     # transparency
     mat.use_transparency = alpha
     mat.transparency_method = 'Z_TRANSPARENCY'
-    mat.alpha = not(alpha)
-    mat.specular_alpha = not(alpha)
+    mat.alpha = not (alpha)
+    mat.specular_alpha = not (alpha)
     mat.raytrace_transparency.fresnel = 0.0
     mat.raytrace_transparency.fresnel_factor = 1.25
 
@@ -151,7 +152,7 @@ def applyShader(mat,config) :
     texslot.blend_type = 'MIX'
     texslot.invert = False
     texslot.use_rgb_to_intensity = False
-    texslot.color = Color((1.0, 0.0, 1.0)) # default
+    texslot.color = Color((1.0, 0.0, 1.0))  # default
     texslot.use_stencil = False
     texslot.default_value = 1.0
 
@@ -160,84 +161,91 @@ def applyShader(mat,config) :
     tex.use_preview_alpha = alpha
 
     # IMAGE
-    if type(img) != type(None) :
+    if type(img) != type(None):
         img.use_premultiply = True
 
-def BSshader(nodes,pointer) :
+
+def BSshader(nodes, pointer):
     tkm = bpy.context.scene.tkm
     typ, nodename = pointer.split(' ')
     RenderShader = nodes[typ][nodename]
-    name = BSname(nodename,RenderShader['Object.Name'])
-    if name in bpy.data.materials :
+    name = BSname(nodename, RenderShader['Object.Name'])
+    if name in bpy.data.materials:
         mat = bpy.data.materials[name]
-    else :
+    else:
         mat = bpy.data.materials.new(name=name)
         # Unused
-        DepthWriteEnable = RenderShader['DepthWriteEnable'] if 'DepthWriteEnable' in RenderShader else False # an integer
-        ShaderTransparency = RenderShader['MultiDrawLayer'] if 'MultiDrawLayer' in RenderShader else False # an integer
-        LightEnable = RenderShader['LightEnable'] if 'LightEnable' in RenderShader else False # an integer
+        DepthWriteEnable = RenderShader[
+            'DepthWriteEnable'] if 'DepthWriteEnable' in RenderShader else False  # an integer
+        ShaderTransparency = RenderShader['MultiDrawLayer'] if 'MultiDrawLayer' in RenderShader else False  # an integer
+        LightEnable = RenderShader['LightEnable'] if 'LightEnable' in RenderShader else False  # an integer
 
-        ShaderPhong = BSnode(nodes,RenderShader['Surface'])
-        #print('mat : %s'%ShaderPhong['Material'])
-        RenderMaterial = BSnode(nodes,ShaderPhong['Material'])
+        ShaderPhong = BSnode(nodes, RenderShader['Surface'])
+        # print('mat : %s'%ShaderPhong['Material'])
+        RenderMaterial = BSnode(nodes, ShaderPhong['Material'])
         DiffuseColor = RenderMaterial['DiffuseColor'] if 'DiffuseColor' in RenderMaterial else False
         SpecularColor = RenderMaterial['SpecularColor'] if 'SpecularColor' in RenderMaterial else False
         AmbientColor = RenderMaterial['AmbientColor'] if 'AmbientColor' in RenderMaterial else False
         EmissionColor = RenderMaterial['Shininess'] if 'EmissionColor' in RenderMaterial else False
         Shininess = RenderMaterial['Shininess'] if 'Shininess' in RenderMaterial else False
         Transparency = RenderMaterial['Transparency'] if 'Transparency' in RenderMaterial else False
-        for key in RenderMaterial.keys() :
-            if key not in ['DiffuseColor','SpecularColor','AmbientColor','EmissionColor','Shininess','Transparency'] :
-                print('NEW RENDERMATERIAL PROP ! : %s'%key)
-        
-        #print(AmbientColor)
-        if DiffuseColor : mat.diffuse_color = Color(DiffuseColor) #[0][0],DiffuseColor[0][1],DiffuseColor[0][2])
-        if SpecularColor : mat.specular_color = Color(SpecularColor)#[0][0],SpecularColor[0][1],SpecularColor[0][2])
-        if AmbientColor : mat.ambient = AmbientColor[0] # source value is a vector3f with x=y=z 
-        if EmissionColor : mat.emit = EmissionColor[0] # source value is a vector3f with x=y=z 
-        #if Shininess : mat.
-        #alpha is a boolean, whereas Transparency is a float or False
-        if Transparency :
+        for key in RenderMaterial.keys():
+            if key not in ['DiffuseColor', 'SpecularColor', 'AmbientColor', 'EmissionColor', 'Shininess',
+                           'Transparency']:
+                print('NEW RENDERMATERIAL PROP ! : %s' % key)
+
+        # print(AmbientColor)
+        if DiffuseColor: mat.diffuse_color = Color(DiffuseColor)  # [0][0],DiffuseColor[0][1],DiffuseColor[0][2])
+        if SpecularColor: mat.specular_color = Color(SpecularColor)  # [0][0],SpecularColor[0][1],SpecularColor[0][2])
+        if AmbientColor: mat.ambient = AmbientColor[0]  # source value is a vector3f with x=y=z
+        if EmissionColor: mat.emit = EmissionColor[0]  # source value is a vector3f with x=y=z
+        # if Shininess : mat.
+        # alpha is a boolean, whereas Transparency is a float or False
+        if Transparency:
             mat.use_transparency = True
             mat.transparency_method = 'Z_TRANSPARENCY'
             mat.alpha = Transparency
             mat.specular_alpha = 0
             alpha = True
-        else : alpha = False
+        else:
+            alpha = False
         texinfluence = False
-        if 'Color' in ShaderPhong :
-            ShaderTexture = BSnode(nodes,ShaderPhong['Color'])
+        if 'Color' in ShaderPhong:
+            ShaderTexture = BSnode(nodes, ShaderPhong['Color'])
             texinfluence = 'Color'
-        if 'Reflection' in ShaderPhong :
-            ShaderTexture = BSnode(nodes,ShaderPhong['Reflection'])
+        if 'Reflection' in ShaderPhong:
+            ShaderTexture = BSnode(nodes, ShaderPhong['Reflection'])
             texinfluence = 'Reflection'
-        if texinfluence == False :
-            print('neither color nor refl. in ShaderPhong %s'%RenderShader['Surface'])
-            print('other props are : %s'%ShaderPhong.keys())
+        if texinfluence == False:
+            print('neither color nor refl. in ShaderPhong %s' % RenderShader['Surface'])
+            print('other props are : %s' % ShaderPhong.keys())
             return mat
 
         ShaderTextureName = ShaderTexture['Object.Name']
 
-        Texture2D = BSnode(nodes,ShaderTexture['Texture'])
+        Texture2D = BSnode(nodes, ShaderTexture['Texture'])
         Texture2DName = Texture2D['Object.Name']
 
-        FileObject = BSnode(nodes,Texture2D['Texture.FileObject'])
+        FileObject = BSnode(nodes, Texture2D['Texture.FileObject'])
         imgpath = FileObject['FileName']
         imgname = imgpath.split('/')[-1]
-        imgpath = tkm.path_archives+'/Images/Q=Tex032M/'+imgpath
+        imgpath = tkm.path_archives + '/Images/Q=Tex032M/' + imgpath
 
-        if imgname not in bpy.data.images :        
-            if os.path.isfile(imgpath+'.png') : ext = '.png'
-            elif os.path.isfile(imgpath+'.jp2') : ext = '.jp2'
-            else :
-                print('Texture image not found ! %s'%Texture2D['Texture.FileObject'])
-                print('path : %s.png or .jp2 '%imgpath)
+        if imgname not in bpy.data.images:
+            if os.path.isfile(imgpath + '.png'):
+                ext = '.png'
+            elif os.path.isfile(imgpath + '.jp2'):
+                ext = '.jp2'
+            else:
+                print('Texture image not found ! %s' % Texture2D['Texture.FileObject'])
+                print('path : %s.png or .jp2 ' % imgpath)
                 return mat
-            img = bpy.data.images.load(filepath=imgpath+ext)
+            img = bpy.data.images.load(filepath=imgpath + ext)
             img.name = imgname
             img.use_premultiply = True
-        else : img = bpy.data.images[imgname]
-        
+        else:
+            img = bpy.data.images[imgname]
+
         '''
         texslot = mat.texture_slots[0]
         mat.texture_slots[0]
@@ -246,14 +254,15 @@ def BSshader(nodes,pointer) :
         img = tex.image        
         img.name
         '''
-        #img = bpy.data.images.new(name='imgname',width=640, height=512)
+        # img = bpy.data.images.new(name='imgname',width=640, height=512)
 
-        if ShaderTextureName not in bpy.data.textures :
-            tex = bpy.data.textures.new(name=ShaderTextureName,type='IMAGE')
+        if ShaderTextureName not in bpy.data.textures:
+            tex = bpy.data.textures.new(name=ShaderTextureName, type='IMAGE')
             tex.image = img
             tex.use_alpha = alpha
             tex.use_preview_alpha = alpha
-        else : tex = bpy.data.textures[ShaderTextureName]
+        else:
+            tex = bpy.data.textures[ShaderTextureName]
 
         texslot = mat.texture_slots.create(index=0)
         texslot.texture = tex
