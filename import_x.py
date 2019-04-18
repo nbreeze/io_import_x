@@ -2,6 +2,7 @@
 # version: see __init__.py
 
 import os
+import sys
 import re
 import struct, binascii
 import time
@@ -10,17 +11,20 @@ import bpy
 import mathutils as bmat
 from mathutils import Vector, Matrix
 
-try:
-    import bel
-    import bel.mesh
-    import bel.image
-    import bel.uv
-    import bel.material
-    import bel.ob
-    import bel.fs
-except:
-    import io_import_x.bel as bel
-    from .bel import mesh, image, uv, material, ob, fs
+# AttributeError: '_RestrictData' object has no attribute 'filepath':
+# myPath = os.path.dirname(bpy.data.filepath)
+script_file = os.path.realpath(__file__)
+directory = os.path.dirname(script_file)
+if not directory in sys.path:
+    sys.path.append(directory)
+
+import bel
+import bel.mesh
+import bel.image
+import bel.uv
+import bel.material
+import bel.ob
+import bel.fs
 
 from .templates_x import *
 
