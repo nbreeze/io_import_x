@@ -1,25 +1,5 @@
-# Blender directX importer
-# version baby
-
-# litterature explaining the parser directions :
-
-# I don't want to load the whole file as it can be huge : go chunks
-# also I want random access to 3d datas to import pieces, not always everything
-# so step1 is a whole file fast parsing, retrieving tokens name and building en empty internal dict
-# with only pointers and no 3d datas.
-# step 2 is to call any token by their names and retrieve the 3d datas thanks to pointers stored in dicts
-# between step 1 and step 2 a script ui should be provided to select, transform etc before import.
-# > I need to know the pointer position of tokens but data.tell() is slow
-# a += pointer computed from line length is way faster. so I need eol -> rb mode
-# and readline() is ok in binary mode 'rb' with \r\n (win) \n (unix) but not \r mac..
-# 2chrs for windows, 1 for mac and lunix > win eol \r\n becomes \n\n (add a line)
-# mac eol \r becomes \n so win lines info are wrong
-# this also allows support for wrong files format (mixed \r and \r\n)
-# for now it only works for text format, but the used methods will be independant of the container type.
-
-# TEST FILES
-# http://assimp.svn.sourceforge.net/viewvc/assimp/trunk/test/models/X/
-
+# Blender DirectX importer
+# version: see __init__.py
 
 import os
 import re
@@ -39,7 +19,7 @@ try:
     import bel.ob
     import bel.fs
 except:
-    import io_directx_bel.bel as bel
+    import io_import_x.bel as bel
     from .bel import mesh, image, uv, material, ob, fs
 
 from .templates_x import *
@@ -102,7 +82,7 @@ def load(operator, context, filepath, files,
     '''
     '''
     with * : defined in dXdata
-    
+
     WORD     16 bits
     * DWORD     32 bits
     * FLOAT     IEEE float
@@ -147,7 +127,7 @@ BINARY FORMAT
 #define TOKEN_UNICODE     50
 #define TOKEN_CSTRING     51
 #define TOKEN_ARRAY       52
-    
+
     '''
 
     # COMMON REGEX
@@ -183,9 +163,9 @@ BINARY FORMAT
      4       Magic Number (required) "xof "
      2       Minor Version 03
      2       Major Version 02
-     4       Format Type (required) 
+     4       Format Type (required)
         "txt " Text File
-        "bin " Binary File  
+        "bin " Binary File
         "tzip" MSZip Compressed Text File
         "bzip" MSZip Compressed Binary File
      4       Float Accuracy "0032" 32 bit or "0064" 64 bit
@@ -673,7 +653,7 @@ BINARY FORMAT
                 frames.append(tokenname)
                 if show_geninfo: print('%sframe : %s' % (tab, tokenname))
 
-        # matrix is used for mesh transform if some mesh(es) exist(s)      
+        # matrix is used for mesh transform if some mesh(es) exist(s)
         if ob:
             is_root = True
             if not mat:
@@ -844,7 +824,7 @@ BINARY FORMAT
                         mat.diffuse_intensity = power
                         mat.specular_color = specCol
                         # dX emit don't use diffuse color but is a color itself
-                        # convert it to a kind of intensity 
+                        # convert it to a kind of intensity
                         mat.emit = (emitCol[0] + emitCol[1] + emitCol[2]) / 3
 
                         if alpha != 1.0:
@@ -858,7 +838,7 @@ BINARY FORMAT
 
                         # texture
                         # only 'TextureFilename' can be here, no type test
-                        # textures have no name in .x so we build 
+                        # textures have no name in .x so we build
                         # image and texture names from the image file name
                         # bdata texture slot name = bdata image name
                         btexnames = []

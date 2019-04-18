@@ -1,17 +1,20 @@
-# Blender directX importer
+# Blender DirectX importer
+
 bl_info = {
     "name": "DirectX Importer",
-    "description": "Import directX Model Format (.x)",
-    "author": "Littleneo (Jerome Mahieux)",
-    "version": (0, 18),
-    "blender": (2, 6, 3),
-    "api": 42615,
+    "description": "Import DirectX Model Format (.x)",
+    "author": "Littleneo (Jerome Mahieux), limemidolin, poikilos",
+    "version": (2, 7),
+    "blender": (2, 66, 0),
     "location": "File > Import > DirectX (.x)",
-    "warning": "",
+    "warning": "Upstream littleneo version does NOT work with >=2.66",
     "wiki_url": "https://github.com/littleneo/directX_blender/wiki",
     "tracker_url": "https://github.com/littleneo/directX_blender/issues",
-    "category": "Import-Export",
-    "dependencies": ""
+    "support": "COMMUNITY",  # COMMUNITY is default anyway though
+    "category": "Import-Export"
+    # I commented undocumented settings. -Poikilos
+    # "api": 42615,
+    # "dependencies": "",
 }
 
 if "bpy" in locals():
@@ -38,7 +41,7 @@ from bpy_extras.io_utils import (ExportHelper,
 try:
     import bel
 except:
-    import io_directx_bel.bel
+    import io_import_x.bel
 
 
 class ImportX(bpy.types.Operator, ImportHelper):
