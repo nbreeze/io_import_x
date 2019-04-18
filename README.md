@@ -1,4 +1,6 @@
-a DirectX importer addon for Blender 2.6
+# io_import_x
+(based on directX_blender by littleneo)
+A DirectX importer addon for Blender 2.7
 
 ## Primary Goals
 
