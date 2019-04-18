@@ -26,6 +26,7 @@ A DirectX importer addon for Blender 2.7
 3. Enable the add-on in the "Add-ons" tab of "User Preferences".
 4. Click "Save User Preferences" to keep the add-on enabled for other
    scenes.
+
 -Poikilos
 
 ## Usage
