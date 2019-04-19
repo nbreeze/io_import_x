@@ -153,3 +153,9 @@ compute pointer value.
 * <http://www.informikon.com/various/the-simplest-skeletal-animation-possible.html>
 * <http://msdn.microsoft.com/en-us/library/windows/desktop/bb173011%28v=VS.85%29.aspx>
 * <http://www.toymaker.info/Games/index.html>
+
+## Linkbacks
+* <https://blender.community/c/rightclickselect/kYcbbc/>
+* <https://www.reddit.com/r/blender/comments/beq3al/importing_x_files_directx_is_almost_working_help/>
+* <https://stackoverflow.com/questions/5767634/import-directx-x-into-blender#comment98211206_16675435>
+
