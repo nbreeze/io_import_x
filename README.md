@@ -163,6 +163,8 @@ compute pointer value.
 * <https://github.com/limemidolin/directX_blender/pull/1/commits>
 
 ## See also
+* A fault-tolerant x loader in Irrlicht:
+  <https://sourceforge.net/p/irrlicht/code/HEAD/tree/trunk/source/Irrlicht/CXMeshFileLoader.cpp#l740>
 * The downstream version in the Blender repository
   <https://svn.blender.org/svnroot/bf-extensions/contrib/py/scripts/addons/io_directx_bel/__init__.py>
   is missing fixes from the <2013 littleneo version, so I mentioned that
