@@ -10,6 +10,16 @@ A DirectX importer addon for Blender 2.7
 
 -littleneo and Poikilos
 
+## License
+This project is distributed under the GNU General Public License v3 (see
+LICENSE file). Although the original repo did not have a license file,
+the plugin is also at Blender's [svn](https://svn.blender.org/svnroot/bf-extensions/contrib/py/scripts/addons/io_directx_bel/)
+and [git](https://git.blender.org/gitweb/gitweb.cgi/blender-addons-contrib.git/tree/refs/heads/blender2.7:/io_directx_bel)
+repos, and therefore under the [GPL](https://git.blender.org/gitweb/gitweb.cgi/blender.git/tree/HEAD:/doc/license)
+as required by Blender Foundation for all add-ons. Any public licensed
+code cannot later be limited to a more restrictive license, so adding a
+GPLv3 license to this repo is ok.
+
 ## Setup
 1. Start Blender
 2. Download & *Save* zip from GitHub. If you click open you may not be
