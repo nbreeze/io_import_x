@@ -16,9 +16,9 @@ no : create
 yes :
     naming_method = 0   blender default (increment name)
     naming_method = 1   do nothing, abort creation and use existing
-    naming_method = 2   create new, rename existing, 
+    naming_method = 2   create new, rename existing,
     naming_method = 3   create new, remove existing
-    
+
 for now, and mesh data, 0 2 or 3
 '''
 
@@ -27,7 +27,7 @@ given name < 21
 if material name exists :
 naming_method = 0   blender default (increment name)
 naming_method = 1   do nothing, abort creation and use existing
-naming_method = 2   create new, rename existing, 
+naming_method = 2   create new, rename existing,
 naming_method = 3   create new, replace existing
 '''
 
@@ -130,7 +130,7 @@ def write(obname, name,
     else :
         ob = bpy.data.objects[name]
         ob.data = me
-        if naming_method == 2 : ob.name = 
+        if naming_method == 2 : ob.name =
         ob.parent = None
         ob.matrix_local = Matrix()
         print('  reuse object %s'%ob.name)

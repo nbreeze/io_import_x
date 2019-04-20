@@ -4,7 +4,7 @@ from time import clock
 
 
 # uvs :
-# 
+#
 def write(me, uvs, matimage=False):
     t = clock()
     uvs, nest = nested(uvs)
