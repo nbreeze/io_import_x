@@ -158,8 +158,15 @@ compute pointer value.
 * <https://blender.community/c/rightclickselect/kYcbbc/>
 * <https://www.reddit.com/r/blender/comments/beq3al/importing_x_files_directx_is_almost_working_help/>
 * <https://stackoverflow.com/questions/5767634/import-directx-x-into-blender#comment98211206_16675435>
+* <https://blender.stackexchange.com/questions/107834/blender-2-79a-x-files>
 * <https://github.com/littleneo/directX_blender/issues/6>
 * <https://github.com/limemidolin/directX_blender/pull/1/commits>
 
 ## See also
-* <https://svn.blender.org/svnroot/bf-extensions/contrib/py/scripts/addons/io_directx_bel/__init__.py>
+* The downstream version in the Blender repository
+  <https://svn.blender.org/svnroot/bf-extensions/contrib/py/scripts/addons/io_directx_bel/__init__.py>
+  is missing fixes from the <2013 littleneo version, so I mentioned that
+  as a comment to my Right-Click Select post at the link under
+  "Discussions" above. Also, they seemed to have done a search and
+  replace do update certain things for Blender 2.8 but it is not working
+  in either 2.79b or 2.80 (nightly 2018-04-18).
