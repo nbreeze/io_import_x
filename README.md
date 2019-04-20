@@ -154,8 +154,12 @@ compute pointer value.
 * <http://msdn.microsoft.com/en-us/library/windows/desktop/bb173011%28v=VS.85%29.aspx>
 * <http://www.toymaker.info/Games/index.html>
 
-## Linkbacks
+## Discussions
 * <https://blender.community/c/rightclickselect/kYcbbc/>
 * <https://www.reddit.com/r/blender/comments/beq3al/importing_x_files_directx_is_almost_working_help/>
 * <https://stackoverflow.com/questions/5767634/import-directx-x-into-blender#comment98211206_16675435>
+* <https://github.com/littleneo/directX_blender/issues/6>
+* <https://github.com/limemidolin/directX_blender/pull/1/commits>
 
+## See also
+* <https://svn.blender.org/svnroot/bf-extensions/contrib/py/scripts/addons/io_directx_bel/__init__.py>
