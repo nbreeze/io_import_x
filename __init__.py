@@ -208,6 +208,12 @@ class ImportX(bpy.types.Operator, ImportHelper):
         default='Y',
     )
 
+    lefthanded : BoolProperty(
+        name="Left-handed",
+        description="Set this if the imported model needs to be converted from a left-handed coordinate system",
+        default=True
+    )
+
     def execute(self, context):
         from . import import_x
         if self.split_mode == 'OFF':
@@ -243,6 +249,7 @@ class ImportX(bpy.types.Operator, ImportHelper):
         box = layout.box()
         col = box.column(align=True)
         col.label(text='Import Options :')
+        col.prop(self, "lefthanded")
         col.prop(self, "chunksize")
         col.prop(self, "use_smooth_groups")
         actif = not (self.quickmode)

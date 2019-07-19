@@ -75,6 +75,7 @@ def load(operator, context, filepath, files,
          use_groups_as_vgroups=False,
          use_image_search=True,
          global_matrix=None,
+         lefthanded=True,
          ):
     if quickmode:
         parented = False
@@ -340,7 +341,7 @@ BINARY FORMAT
         name = xnam
         if len(name) == 0: name = l.split(' ')[0].strip()
 
-        namelookup[xnam] = bel.bpyname(name, tokens, 4)
+        namelookup[xnam] = bel.bpyname(name, tokens, suffix=4)
 
         return namelookup[xnam]
 
@@ -600,10 +601,50 @@ BINARY FORMAT
             childs.append(childname)
         return childs
 
+    def fixupTransformMatrix( matrix: Matrix ) -> Matrix:
+        '''
+            Converts from a D3DX matrix format to Blender's Matrix format.
+            Returns a transposed copy of the given matrix. If lefthanded, then inverts its Z-axis as well.
+        '''
+
+        # !!! DirectX stores translation in 4th row, not 4th column, so a transpose is needed.
+        m = matrix.transposed()
+
+        if lefthanded:
+            # Change from left-handed to right-handed.
+            zinv = Matrix()
+            zinv[2][2] = -1.0
+            m = zinv @ m @ zinv
+
+        return m
+
+    def fixupTranslation( vec: list ):
+        '''
+            If lefthanded, this inverts the Z-axis of the given translation.
+            Returns the given translation structure.
+        '''
+
+        if lefthanded:
+            vec[2] *= -1.0
+
+        return vec
+
+    def fixupUV( uv: list ):
+        '''
+            Inverts the V component.
+            Returns the given uv structure.
+        '''
+
+        uv[1] = 1.0 - uv[1]
+
+        return uv
+
     # the input nested list of [bonename, matrix, [child0,child1..]] is given by import_dXtree()
     def buildArm(armdata, child, lvl=0, parent_matrix=False):
 
         bonename, bonemat, bonechilds = child
+
+        bonemat = fixupTransformMatrix( bonemat )
 
         if lvl == 0:
             armname = armdata
@@ -675,7 +716,7 @@ BINARY FORMAT
                 else:
                     parentname = tokenname
 
-                ob = getMesh(parentname, tokenname)
+                ob = getMesh(parentname, tokenname, debug=show_geninfo)
                 ob.name = file_
                 obs.append(ob)
 
@@ -700,7 +741,10 @@ BINARY FORMAT
                     '%smesh token without matrix, set it to default\n%splease report in bug tracker if you read this !' % (
                         tab, tab))
             if parentname == '':
-                mat = mat * global_matrix
+                if bpy.app.version >= (2, 80, 0):
+                    mat @= global_matrix
+                else:
+                    mat *= global_matrix
             if len(obs) == 1:
                 ob.matrix_world = mat
             else:
@@ -796,10 +840,12 @@ BINARY FORMAT
 
         nVerts, verts, nFaces, faces = readToken(tokenname)
 
+        for vec in verts:
+            fixupTranslation( vec )
+        
         if debug:
             print('verts    : %s %s\nfaces    : %s %s' % (nVerts, len(verts), nFaces, len(faces)))
 
-        # for childname in token['childs'] :
         for childname in getChilds(tokenname):
 
             tokentype = tokens[childname]['type']
@@ -808,6 +854,9 @@ BINARY FORMAT
             if tokentype == 'meshtexturecoords':
                 uv = readToken(childname)
                 # uv = bel.uv.asVertsLocation(uv, faces)
+
+                for _uv in uv: fixupUV( _uv )
+
                 uv = bel.uv.asFlatList(uv, faces)
                 uvs.append(uv)
 
@@ -1017,6 +1066,9 @@ BINARY FORMAT
             # VERTICES GROUPS/WEIGHTS
             elif tokentype == 'skinweights':
                 groupname, nverts, vindices, vweights, mat = readToken(childname)
+
+                mat = fixupTransformMatrix( mat )
+
                 groupname = namelookup[groupname]
                 if debug:
                     print('vgroup    : %s (%s/%s verts) %s' % (
@@ -1034,6 +1086,9 @@ BINARY FORMAT
                             groupnames, groupindices, groupweights,
                             use_smooth_groups,
                             naming_method)
+
+        # Fixup the Mesh's normals.
+        ob.data.flip_normals()
 
         return ob
 
@@ -1105,7 +1160,7 @@ BINARY FORMAT
                             else:
                                 obname = tokenname
 
-                            ob = getMesh(obname, tokenname, show_geninfo)
+                            ob = getMesh(obname, tokenname, debug=show_geninfo)
                             ob.matrix_world = global_matrix
 
                     print('done in %.2f\'' % (_rtime() - start))  # ,end='\r')
