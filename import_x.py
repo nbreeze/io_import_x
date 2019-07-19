@@ -644,8 +644,6 @@ BINARY FORMAT
 
         bonename, bonemat, bonechilds = child
 
-        bonemat = fixupTransformMatrix( bonemat )
-
         if lvl == 0:
             armname = armdata
             armdata = bpy.data.armatures.new(name=armname)
@@ -731,6 +729,8 @@ BINARY FORMAT
             elif tokentype == 'frame':
                 frames.append(tokenname)
                 if show_geninfo: print('%sframe : %s' % (tab, tokenname))
+
+        if mat: mat = fixupTransformMatrix( mat )
 
         # matrix is used for mesh transform if some mesh(es) exist(s)
         if ob:
@@ -1069,16 +1069,20 @@ BINARY FORMAT
 
                 mat = fixupTransformMatrix( mat )
 
-                groupname = namelookup[groupname]
-                if debug:
-                    print('vgroup    : %s (%s/%s verts) %s' % (
-                        groupname, len(vindices), len(vweights), 'bone' if groupname in tokens else ''))
+                if groupname in namelookup:
+                    groupname = namelookup[groupname]
+                    if debug:
+                        print('vgroup    : %s (%s/%s verts) %s' % (
+                            groupname, len(vindices), len(vweights), 'bone' if groupname in tokens else ''))
 
-                # if debug : print('matrix : %s\n%s'%(type(mat),mat))
+                    # if debug : print('matrix : %s\n%s'%(type(mat),mat))
 
-                groupnames.append(groupname)
-                groupindices.append(vindices)
-                groupweights.append(vweights)
+                    groupnames.append(groupname)
+                    groupindices.append(vindices)
+                    groupweights.append(vweights)
+
+                else:
+                    operator.report( {'WARNING'}, 'Encountered undefined vertex group %s! Skipping.' % groupname )
 
         ob = bel.mesh.write(obname, tokenname,
                             verts, edges, faces,
