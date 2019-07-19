@@ -124,6 +124,7 @@ def write(obname: str, name: str,
     # map a material to each face
     if len(mats) > 0:
         for fi, f in enumerate(me.polygons):
+            if fi < 0 or fi >= len(mats): continue
             f.material_index = mats[fi]
 
     obj = bpy.data.objects.new(name=obname, object_data=me)

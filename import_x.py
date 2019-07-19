@@ -627,8 +627,6 @@ BINARY FORMAT
 
         bonename, bonemat, bonechilds = child
 
-        bonemat = fixupTransformMatrix( bonemat )
-
         if lvl == 0:
             armname = armdata
             armdata = bpy.data.armatures.new(name=armname)
@@ -653,13 +651,18 @@ BINARY FORMAT
         # bone.tail = bonematW.to_translation()
 
         bone_length = bone_maxlength
+        last_bone_head: Vector = None
         for bonechild in bonechilds:
             bonechild = buildArm(armdata, bonechild, lvl=lvl + 1, parent_matrix=bonematW)
             bonechild.parent = bone
 
-            bone_length = min((bonechild.head - bone.head).length, bone_length)
+            last_bone_head = bonechild.head
+            bone_length = min((last_bone_head - bone.head).length, bone_length)
 
-        bone.tail = ( bonematW @ Matrix.Translation( (0, bone_length, 0) ) ).to_translation()
+        if len( bonechilds ) == 1:
+            bone.tail = Vector( last_bone_head )
+        else:
+            bone.tail = ( bonematW @ Matrix.Translation( (bone_length, 0, 0) ) ).to_translation()
 
         if lvl == 0:
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -717,14 +720,15 @@ BINARY FORMAT
                 frames.append(tokenname)
                 if show_geninfo: print('%sframe : %s' % (tab, tokenname))
 
+        if mat: mat = fixupTransformMatrix( mat )
+
         # matrix is used for mesh transform if some mesh(es) exist(s)
         if ob:
             is_root = True
             if not mat:
-                mat = Matrix()
-                if show_geninfo: print(
-                    '%smesh token without matrix, set it to default\n%splease report in bug tracker if you read this !' % (
-                        tab, tab))
+                mat = fixupTransformMatrix( Matrix() )
+                operator.report( {'WARNING'}, 'No transform was defined in Frame %s, assuming identity transform.' % parentname )
+
             if parentname == '':
                 mat @= global_matrix
             if len(obs) == 1:
@@ -906,16 +910,20 @@ BINARY FORMAT
 
                 mat = fixupTransformMatrix( mat )
 
-                groupname = namelookup[groupname]
-                if debug:
-                    print('vgroup    : %s (%s/%s verts) %s' % (
-                        groupname, len(vindices), len(vweights), 'bone' if groupname in tokens else ''))
+                if groupname in namelookup:
+                    groupname = namelookup[groupname]
+                    if debug:
+                        print('vgroup    : %s (%s/%s verts) %s' % (
+                            groupname, len(vindices), len(vweights), 'bone' if groupname in tokens else ''))
 
-                # if debug : print('matrix : %s\n%s'%(type(mat),mat))
+                    # if debug : print('matrix : %s\n%s'%(type(mat),mat))
 
-                groupnames.append(groupname)
-                groupindices.append(vindices)
-                groupweights.append(vweights)
+                    groupnames.append(groupname)
+                    groupindices.append(vindices)
+                    groupweights.append(vweights)
+
+                else:
+                    operator.report( {'WARNING'}, 'Encountered undefined vertex group %s! Skipping.' % groupname )
 
         ob = bel.mesh.write(obname, tokenname,
             verts, edges, faces,
