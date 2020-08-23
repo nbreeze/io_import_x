@@ -29,7 +29,7 @@ def new(name, naming_method):
 # @param ob 'all', 'active', 'selected', <object>, 'objectname'
 # @return a list of objects or an empty list
 def get(ob):
-    if type(ob) == str:
+    if isinstance(ob, str):
         if ob == 'all':
             return bpy.context.scene.objects
         elif ob == 'active':
