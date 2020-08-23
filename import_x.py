@@ -391,9 +391,8 @@ BINARY FORMAT
             return False
         # print('> use template %s'%datatype)
         block = readBlock(data, token)
-        ptr = 0
         # return dXtemplateData(tpl,block)
-        fields, ptr = dXtemplateData(tpl, block)
+        fields, _ = dXtemplateData(tpl, block)
         if datatype in templatesConvert:
             fields = eval(templatesConvert[datatype])
         return fields
