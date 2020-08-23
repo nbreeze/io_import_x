@@ -41,6 +41,10 @@ imp.reload(bel.ob)
 imp.reload(bel.uv)
 '''
 
+if sys.version_info >= (3, 3):
+    _rtime = time.perf_counter
+else:
+    _rtime = time.clock
 
 ###################################################
 
@@ -958,7 +962,7 @@ BINARY FORMAT
         item_file_path = (os.path.join(x_file_dir, item_file.name))
 
         print('\nimporting %s...' % item_file.name)
-        start = time.clock()
+        start = _rtime()
         path = os.path.dirname(item_file_path)
         item_file_path = os.fsencode(item_file_path)
         with open(item_file_path, 'rb') as data:
@@ -981,9 +985,9 @@ BINARY FORMAT
 
                     ## FILE READ : STEP 1 : STRUCTURE
                     if show_geninfo: print('\nBuilding internal .x tree')
-                    t = time.clock()
+                    t = _rtime()
                     tokens, templates, tokentypes = dXtree(data, quickmode)
-                    readstruct_time = time.clock() - t
+                    readstruct_time = _rtime() - t
                     if show_geninfo: print('builded tree in %.2f\'' % (readstruct_time))  # ,end='\r')
 
                     ## populate templates with datas
@@ -1021,7 +1025,7 @@ BINARY FORMAT
                             ob = getMesh(obname, tokenname, show_geninfo)
                             ob.matrix_world = global_matrix
 
-                    print('done in %.2f\'' % (time.clock() - start))  # ,end='\r')
+                    print('done in %.2f\'' % (_rtime() - start))  # ,end='\r')
 
                 else:
                     print('only .x files in text format are currently supported')
