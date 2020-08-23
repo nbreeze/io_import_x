@@ -303,9 +303,11 @@ BINARY FORMAT
             lines = chunk.decode('utf-8', errors='ignore')
             # if stream : return lines.replace('\r','').replace('\n','')
             lines = lines.replace('\r', '\n').split('\n')
-            if trunkated: lines[0] = trunkated + lines[0]
+            if trunkated:
+                lines[0] = trunkated + lines[0]
             if len(lines) == 1:
-                if lines[0] == '': return None, None
+                if lines[0] == '':
+                    return None, None
                 return lines, False
             return lines, lines.pop()
         # wip, todo for binaries
