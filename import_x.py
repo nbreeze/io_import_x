@@ -184,10 +184,10 @@ BINARY FORMAT
             return False
         minor = data.read(2).decode()
         major = data.read(2).decode()
-        format = data.read(4).decode().strip()
+        format_ = data.read(4).decode().strip()
         accuracy = int(data.read(4).decode())
         data.seek(0)
-        return (minor, major, format, accuracy)
+        return (minor, major, format_, accuracy)
 
     ##
     def dXtree(data, quickmode=False):
