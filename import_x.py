@@ -48,6 +48,14 @@ else:
 
 ###################################################
 
+# Copied from https://blender.stackexchange.com/questions/109711/how-to-popup-simple-message-box-from-python-console
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 def load(operator, context, filepath, files,
          global_clamp_size=0.0,
          show_tree=False,
@@ -1028,8 +1036,7 @@ BINARY FORMAT
                     print('done in %.2f\'' % (_rtime() - start))  # ,end='\r')
 
                 else:
-                    print('only .x files in text format are currently supported')
-                    print('please share your file to make the importer evolve')
+                    ShowMessageBox("only .x files in text format are currently supported.", "Import failed", "ERROR")
         rootTokens = []
 
     return {'FINISHED'}
