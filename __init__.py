@@ -6,7 +6,7 @@ bl_info = {
     "description": "Import DirectX Model Format (.x)",
     "author": "Littleneo (Jerome Mahieux), limemidolin, poikilos",
     "version": (2, 7),
-    "blender": (2, 66, 0),
+    "blender": (2, 80, 0),
     "location": "File > Import > DirectX (.x)",
     "warning": "Upstream littleneo version does NOT work with >=2.66",
     "wiki_url": "https://github.com/littleneo/directX_blender/wiki",
@@ -242,7 +242,7 @@ class ImportX(bpy.types.Operator, ImportHelper):
         # import box
         box = layout.box()
         col = box.column(align=True)
-        col.label('Import Options :')
+        col.label(text='Import Options :')
         col.prop(self, "chunksize")
         col.prop(self, "use_smooth_groups")
         actif = not (self.quickmode)
@@ -258,25 +258,25 @@ class ImportX(bpy.types.Operator, ImportHelper):
         # source orientation box
         box = layout.box()
         col = box.column(align=True)
-        col.label('Source Orientation :')
+        col.label(text='Source Orientation :')
         col.prop(self, "axis_forward")
         col.prop(self, "axis_up")
 
         box = layout.box()
         col = box.column(align=True)
-        col.label("Option 1")
+        col.label(text="Option 1")
         col.prop(self, "do_not_add_unused_material")
 
         # naming methods box
         box = layout.box()
         col = box.column(align=True)
-        col.label('Naming Method :')
+        col.label(text='Naming Method :')
         col.props_enum(self, "naming_method")
 
         # info/debug box
         box = layout.box()
         col = box.column(align=True)
-        col.label('Info / Debug :')
+        col.label(text='Info / Debug :')
         col.prop(self, "show_tree")
         col.prop(self, "show_templates")
         col.prop(self, "show_geninfo")
@@ -313,16 +313,16 @@ def menu_func_import(self, context):
 #    self.layout.operator(ExportX.bl_idname, text="DirectX (.x)")
 
 def register():
-    bpy.utils.register_module(__name__)
+    bpy.utils.register_class(ImportX)
 
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     # bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(ImportX)
 
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     # bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 
