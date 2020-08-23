@@ -52,7 +52,7 @@ def remove(ob, with_data=True):
         data = ob.data
         # and_data=False
         # never wipe data before unlink the ex-user object of the scene else crash (2.58 3 770 2)
-        # if there's more than one user for this data, never wipeOutData. will be done with the last user
+        # if there's more than one user for this data, never removeData. will be done with the last user
         # if in the list
         and_data = with_data
         try:
@@ -78,7 +78,7 @@ def remove(ob, with_data=True):
 
         # never wipe data before unlink the ex-user object of the scene else crash (2.58 3 770 2)
         if and_data:
-            wipeOutData(data)
+            removeData(data)
 
 
 ## remove an object data from blender internal
