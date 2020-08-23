@@ -28,7 +28,7 @@ def new(name, naming_method):
 ##  TODO
 # @param ob 'all', 'active', 'selected', <object>, 'objectname'
 # @return a list of objects or an empty list
-def get(grp):
+def get(ob):
     if type(ob) == str:
         if ob == 'all':
             return bpy.context.scene.objects
