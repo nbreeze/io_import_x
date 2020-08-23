@@ -4,7 +4,8 @@
 import os
 import sys
 import re
-import struct, binascii
+import struct
+import binascii
 import time
 
 import bpy
