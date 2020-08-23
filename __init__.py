@@ -19,12 +19,12 @@ bl_info = {
 }
 
 if "bpy" in locals():
-    import imp
+    import importlib
 
     if "import_x" in locals():
-        imp.reload(import_x)
+        importlib.reload(import_x)
     # if "export_x" in locals():
-    #    imp.reload(export_x)
+    #    importlib.reload(export_x)
 
 import bpy
 from bpy.props import (BoolProperty,
