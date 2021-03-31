@@ -4,7 +4,8 @@
 import os
 import sys
 import re
-import struct, binascii
+import struct
+import binascii
 import time
 
 import bpy
@@ -40,8 +41,20 @@ imp.reload(bel.ob)
 imp.reload(bel.uv)
 '''
 
+if sys.version_info >= (3, 3):
+    _rtime = time.perf_counter
+else:
+    _rtime = time.clock
 
 ###################################################
+
+# Copied from https://blender.stackexchange.com/questions/109711/how-to-popup-simple-message-box-from-python-console
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
 
 def load(operator, context, filepath, files,
          global_clamp_size=0.0,
@@ -183,10 +196,10 @@ BINARY FORMAT
             return False
         minor = data.read(2).decode()
         major = data.read(2).decode()
-        format = data.read(4).decode().strip()
+        format_ = data.read(4).decode().strip()
         accuracy = int(data.read(4).decode())
         data.seek(0)
-        return (minor, major, format, accuracy)
+        return (minor, major, format_, accuracy)
 
     ##
     def dXtree(data, quickmode=False):
@@ -302,9 +315,11 @@ BINARY FORMAT
             lines = chunk.decode('utf-8', errors='ignore')
             # if stream : return lines.replace('\r','').replace('\n','')
             lines = lines.replace('\r', '\n').split('\n')
-            if trunkated: lines[0] = trunkated + lines[0]
+            if trunkated:
+                lines[0] = trunkated + lines[0]
             if len(lines) == 1:
-                if lines[0] == '': return None, None
+                if lines[0] == '':
+                    return None, None
                 return lines, False
             return lines, lines.pop()
         # wip, todo for binaries
@@ -388,9 +403,8 @@ BINARY FORMAT
             return False
         # print('> use template %s'%datatype)
         block = readBlock(data, token)
-        ptr = 0
         # return dXtemplateData(tpl,block)
-        fields, ptr = dXtemplateData(tpl, block)
+        fields, _ = dXtemplateData(tpl, block)
         if datatype in templatesConvert:
             fields = eval(templatesConvert[datatype])
         return fields
@@ -956,7 +970,7 @@ BINARY FORMAT
         item_file_path = (os.path.join(x_file_dir, item_file.name))
 
         print('\nimporting %s...' % item_file.name)
-        start = time.clock()
+        start = _rtime()
         path = os.path.dirname(item_file_path)
         item_file_path = os.fsencode(item_file_path)
         with open(item_file_path, 'rb') as data:
@@ -979,9 +993,9 @@ BINARY FORMAT
 
                     ## FILE READ : STEP 1 : STRUCTURE
                     if show_geninfo: print('\nBuilding internal .x tree')
-                    t = time.clock()
+                    t = _rtime()
                     tokens, templates, tokentypes = dXtree(data, quickmode)
-                    readstruct_time = time.clock() - t
+                    readstruct_time = _rtime() - t
                     if show_geninfo: print('builded tree in %.2f\'' % (readstruct_time))  # ,end='\r')
 
                     ## populate templates with datas
@@ -1019,11 +1033,10 @@ BINARY FORMAT
                             ob = getMesh(obname, tokenname, show_geninfo)
                             ob.matrix_world = global_matrix
 
-                    print('done in %.2f\'' % (time.clock() - start))  # ,end='\r')
+                    print('done in %.2f\'' % (_rtime() - start))  # ,end='\r')
 
                 else:
-                    print('only .x files in text format are currently supported')
-                    print('please share your file to make the importer evolve')
+                    ShowMessageBox("only .x files in text format are currently supported.", "Import failed", "ERROR")
         rootTokens = []
 
     return {'FINISHED'}
