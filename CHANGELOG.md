@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [git] - 2021-03-30
+### Changed
+- Update for Blender 2.80
+  - Merge egore changes
+  - Add some instances of `if bpy.app.version >= (2, 80, 0):` (in some or all cases listed below)
+  - Change uv_textures to uv_layers: <https://blender.stackexchange.com/questions/193894/updating-blender-2-79-script-to-2-80-mesh-uv-textures-new-fails-with-mesh-o>.
+  - `name` must be a keyword argument in vertex_groups.new(...).
+  - Use `bpy.context.collection.objects` instead of `bpy.context.scene.objects`.
+  - Change `.select = True` to `.select_set(state=True)` (fix "AttributeError: 'Object' object has no attribute 'select'").
+  - Change `bpy.context.collection.objects.active = arm` to `bpy.context.view_layer.objects.active = arm` (fix "AttributeError: bpy_prop_collection: attribute "active" not found").
+  - Add 1.0 alpha to the color (the x format alpha value, which becomes part of the material settings) to
+    fix: ```
+  File "/home/owner/.config/blender/2.80/scripts/addons/io_import_x/import_x.py", line 856, in getMesh
+    mat.diffuse_color = diffuse_color
+ValueError: bpy_struct: item.attr = val: sequences of dimension 0 should contain 4 items, not 3
+```
+
+### Fixed
+- Don't redefine Python 3 builtin file (change the variable name to file_).
+- Add the missing arg to import_dXtree (hmm...try tokenname) to fix "expected string got int"
+  - and set `lvl` by name since it is a keyword argument.
+
 ## [0.27] - 2019-04-18
 (Poikilos)
 ### Changed
