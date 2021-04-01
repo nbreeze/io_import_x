@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [git] - 2021-03-30
+## [git] - 2021-03-31
 ### Changed
 - Update for Blender 2.80
   - Merge egore changes
