@@ -100,7 +100,11 @@ def write(obname, name,
             '''
             mat = bpy.data.materials[matname]
             me.materials.append(mat)
-            texslot_nb = len(mat.texture_slots)
+            texslot_nb = None
+            if hasattr(mat, 'texture_slots'):
+                texslot_nb = len(mat.texture_slots)
+                # ^ texture_slots is only available in workspace render
+                #   (formerly Blender internal)
             if texslot_nb:
                 texslot = mat.texture_slots[0]
                 if type(texslot) != type(None):
@@ -142,8 +146,13 @@ def write(obname, name,
             weightsadd(obj, groupname, vindices[gpi], vweights[gpi])
 
     # scene link check
-    if obj.name not in bpy.context.scene.objects.keys():
-        bpy.context.scene.objects.link(obj)
+    if bpy.app.version >= (2, 80, 0):
+        if obj.name not in bpy.context.scene.collection.objects.keys():
+            bpy.context.scene.collection.objects.link(obj)
+    else:
+        # < 2.8
+        if obj.name not in bpy.context.scene.objects.keys():
+            bpy.context.scene.objects.link(obj)
 
     return obj
 
@@ -171,7 +180,10 @@ def weightsadd(ob, groupname, vindices, vweights=False):
         vweights = [1.0 for i in range(len(vindices))]
     elif type(vweights) == float:
         vweights = [vweights for i in range(len(vindices))]
-    group = ob.vertex_groups.new(groupname)
+    if bpy.app.version >= (2, 80, 0):
+        group = ob.vertex_groups.new(name=groupname)
+    else:
+        group = ob.vertex_groups.new(groupname)
     for vi, v in enumerate(vindices):
         group.add([v], vweights[vi], 'REPLACE')
 

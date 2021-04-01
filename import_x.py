@@ -391,6 +391,15 @@ BINARY FORMAT
         block = block.replace('\n', '').replace(' ', '').replace('\t ', '')
         return block
 
+    def vec3ToVec4(vec3, alpha=1.0):
+        if len(vec3) == 4:
+            print("WARNING: vec3_to_vec4 got a vec4")
+            return vec3
+        elif len(vec3) != 3:
+            raise ValueError("WARNING: vec3_to_vec4 got a {}-long"
+                             " iterable.".format(len(vec3)))
+        return (vec3[0], vec3[1], vec3[2], alpha)
+
     def readToken(tokenname):
         token = tokens[tokenname]
         datatype = token['type'].lower()
@@ -600,14 +609,22 @@ BINARY FORMAT
             armname = armdata
             armdata = bpy.data.armatures.new(name=armname)
             arm = bpy.data.objects.new(armname, armdata)
-            bpy.context.scene.objects.link(arm)
-            arm.select = True
-            bpy.context.scene.objects.active = arm
+            if bpy.app.version >= (2, 80, 0):
+                bpy.context.collection.objects.link(arm)
+                arm.select_set(state=True)
+                bpy.context.view_layer.objects.active = arm
+            else:
+                bpy.context.scene.objects.link(arm)
+                arm.select = True
+                bpy.context.scene.objects.active = arm
             bpy.ops.object.mode_set(mode='EDIT')
             parent_matrix = Matrix()
 
         bone = armdata.edit_bones.new(name=bonename)
-        bonematW = parent_matrix * bonemat
+        if bpy.app.version >= (2, 80, 0):
+            bonematW = parent_matrix @ bonemat
+        else:
+            bonematW = parent_matrix * bonemat
         bone.head = bonematW.to_translation()
         # bone.roll.. ?
         bone_length = bone_maxlength
@@ -615,13 +632,16 @@ BINARY FORMAT
             bonechild = buildArm(armdata, bonechild, lvl + 1, bonematW)
             bonechild.parent = bone
             bone_length = min((bonechild.head - bone.head).length, bone_length)
-        bone.tail = bonematW * Vector((0, bone_length, 0))
+        if bpy.app.version >= (2, 80, 0):
+            bone.tail = bonematW @ Vector((0, bone_length, 0))
+        else:
+            bone.tail = bonematW * Vector((0, bone_length, 0))
         if lvl == 0:
             bpy.ops.object.mode_set(mode='OBJECT')
             return arm
         return bone
 
-    def import_dXtree(field, file, lvl=0):
+    def import_dXtree(field, file_, lvl=0):
         tab = ' ' * lvl * 2
         if field == []:
             if show_geninfo: print('%s>> no childs, return False' % (tab))
@@ -656,7 +676,7 @@ BINARY FORMAT
                     parentname = tokenname
 
                 ob = getMesh(parentname, tokenname)
-                ob.name = file
+                ob.name = file_
                 obs.append(ob)
 
                 if show_geninfo: print('%smesh : %s' % (tab, tokenname))
@@ -696,7 +716,10 @@ BINARY FORMAT
 
         # nothing case ?
         else:
-            ob = [parentname, Matrix() * global_matrix, []]
+            if bpy.app.version >= (2, 80, 0):
+                ob = [parentname, Matrix() @ global_matrix, []]
+            else:
+                ob = [parentname, Matrix() * global_matrix, []]
             if show_geninfo: print('%snothing here' % (tab))
 
         childs = []
@@ -705,7 +728,7 @@ BINARY FORMAT
             if show_geninfo: print('%s<Begin %s :' % (tab, tokenname))
 
             # child is either False, empty, object, or a list or undefined name matrices hierarchy
-            child = import_dXtree(getChilds(tokenname), lvl + 1)
+            child = import_dXtree(getChilds(tokenname), file_+"_"+tokenname, lvl=lvl+1)
             if child and type(child) != list:
                 is_root = True
             childs.append([tokenname, child])
@@ -794,10 +817,17 @@ BINARY FORMAT
             elif tokentype == 'meshmateriallist':
                 nbslots, facemats = readToken(childname)
 
-                if debug: print('facemats : %s' % (len(facemats)))
+                if debug:
+                    print('len(facemats) : %s' % (len(facemats)))
+                if debug:
+                    print('facemats : %s' % (facemats))
 
                 # length does not match (could be tuned more, need more cases)
                 if len(facemats) != len(faces):
+                    print("WARNING: There are {} facemats but {} faces."
+                          "The faces length will be used and facemats"
+                          "[0] will be used for each."
+                          "".format(len(facemats), len(faces)))
                     facemats = [facemats[0] for i in faces]
 
                 # mat can exist but with no datas so we prepare the mat slot
@@ -805,7 +835,11 @@ BINARY FORMAT
                 for slot in range(nbslots) if not do_not_add_unused_material else range(len(list(set(facemats)))):
                     matslots.append('dXnoname%s' % slot)
 
-                if debug: print(matslots)
+                if debug:
+                        print('matslots : %s' % matslots)
+                if debug:
+                        print('do_not_add_unused_material : %s' % do_not_add_unused_material)
+
 
                 # Table of convert face material index to blender material slot
                 materials_slot_dictionary = {}
@@ -816,8 +850,16 @@ BINARY FORMAT
 
                     if do_not_add_unused_material:
                         if slot_index in facemats:
+                            if debug:
+                                print("* adding {} at {}"
+                                      "".format(slot_index,
+                                                len(materials_slot_dictionary)))
                             materials_slot_dictionary.update({slot_index: len(materials_slot_dictionary)})
                         else:
+                            if debug:
+                                print("* skipping unused material"
+                                      " token {} not in facemats {}"
+                                      "".format(slot_index, facemats))
                             # Omit unused material tokens
                             if naming_method != 1:
                                 (_diffuse_color, _alpha), _power, _specCol, _emitCol = readToken(mat_name)
@@ -826,6 +868,8 @@ BINARY FORMAT
                             continue
 
                     slot_id = slot_index if not do_not_add_unused_material else materials_slot_dictionary[slot_index]
+                    if debug:
+                        print("slot_id: {}".format(slot_id))
 
                     # rename dummy mats with the right name
                     matslots[slot_id] = mat_name
@@ -838,12 +882,21 @@ BINARY FORMAT
                         # print('matname : %s'%matname)
                         (diffuse_color, alpha), power, specCol, emitCol = readToken(mat_name)
                         # if debug : print(diffuse_color,alpha, power, specCol, emitCol)
+                        if bpy.app.version >= (2, 80, 0):
+                            diffuse_color = vec3ToVec4(diffuse_color, alpha=alpha)
                         mat.diffuse_color = diffuse_color
-                        mat.diffuse_intensity = power
+                        # The following were removed in 2.80
+                        # (<https://docs.blender.org/api/2.80/change_log.html?
+                        # highlight=diffuse_intensity>):
+                        # diffuse_intensity, emit
+                        if bpy.app.version >= (2, 80, 0):
+                            pass
+                        else:
+                            mat.diffuse_intensity = power
+                            mat.emit = (emitCol[0] + emitCol[1] + emitCol[2]) / 3
                         mat.specular_color = specCol
                         # dX emit don't use diffuse color but is a color itself
                         # convert it to a kind of intensity
-                        mat.emit = (emitCol[0] + emitCol[1] + emitCol[2]) / 3
 
                         if alpha != 1.0:
                             mat.use_transparency = True
@@ -926,10 +979,18 @@ BINARY FORMAT
                         # mat.name = first_texture_name
                         # first_texture_name = ""
 
-                facemats = [materials_slot_dictionary[i] for i in facemats]
+                print("materials_slot_dictionary:{}"
+                      "".format(materials_slot_dictionary))
+                if len(materials_slot_dictionary) > 0:
+                    facemats = [materials_slot_dictionary[i] for i in facemats]
+                else:
+                    print("WARNING: There were no entries in"
+                          " materials_slot_dictionary.")
+                    pass
 
                 # create remaining dummy mat
-                if debug: print(matslots)
+                if debug:
+                    print(matslots)
                 for slot_index, mat_name in enumerate(matslots):
                     if mat_name not in bpy.data.materials:
                         mat = bel.material.new(mat_name, naming_method)

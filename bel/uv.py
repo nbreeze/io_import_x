@@ -2,6 +2,7 @@ import time
 import sys
 from mathutils import Vector
 from .__init__ import *
+import bpy
 
 if sys.version_info >= (3, 3):
     _rtime = time.perf_counter
@@ -16,8 +17,10 @@ def write(me, uvs, matimage=False):
     newuvs = []
     # uvi : uvlayer id  uvlist : uv coordinates list
     for uvi, uvlist in enumerate(uvs):
-
-        uv = me.uv_textures.new()
+        if bpy.app.version >= (2, 80, 0):
+            uv = me.uv_layers.new()
+        else:
+            uv = me.uv_textures.new()
         uv.name = 'UV%s' % uvi
 
         uvlayer = me.uv_layers[-1].data
@@ -51,7 +54,10 @@ def flatwrite(me, uvs, matimage=False):
     for uvi, uvlist in enumerate(uvs):
         # print('uvlist input : %s'%(len(uvlist)))
         # print(uvlist[0:5])
-        uv = me.uv_textures.new()
+        if bpy.app.version >= (2, 80, 0):
+            uv = me.uv_layers.new()
+        else:
+            uv = me.uv_textures.new()
         uv.name = 'UV%s' % uvi
         uvlayer = me.uv_layers[-1].data
         # flatuv = awaited uvlist length

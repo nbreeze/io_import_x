@@ -13,14 +13,21 @@ def new(name, datatype, naming_method):
             ob = bpy.data.objects.new(name, datatype)
             ob.name = name
         elif naming_method == 3:
-            bpy.context.scene.objects.unlink(ob)
+            if bpy.app.version >= (2, 80, 0):
+                bpy.context.collection.objects.unlink(ob)
+            else:
+                bpy.context.scene.objects.unlink(ob)
             ob.user_clear()
             bpy.data.objects.remove(ob)
             ob = bpy.data.objects.new(name, datatype)
     else:
         ob = bpy.data.objects.new(name, datatype)
-    if ob.name not in bpy.context.scene.objects.keys():
-        bpy.context.scene.objects.link(ob)
+    if bpy.app.version >= (2, 80, 0):
+        if ob.name not in bpy.context.collection.objects.keys():
+            bpy.context.collection.objects.link(ob)
+    else:
+        if ob.name not in bpy.context.scene.objects.keys():
+            bpy.context.scene.objects.link(ob)
     return ob
 
 
@@ -30,7 +37,10 @@ def new(name, datatype, naming_method):
 def get(ob):
     if isinstance(ob, str):
         if ob == 'all':
-            return bpy.context.scene.objects
+            if bpy.app.version >= (2, 80, 0):
+                return bpy.context.collection.objects
+            else:
+                return bpy.context.scene.objects
         elif ob == 'active':
             return [bpy.context.active_object] if bpy.context.active_object != None else []
         elif ob == 'selected':
