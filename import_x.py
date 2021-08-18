@@ -877,6 +877,8 @@ BINARY FORMAT
                     # blender material creation (need tuning)
                     mat = bel.material.new(mat_name, naming_method)
                     matslots[slot_id] = mat.name
+                    mat.use_nodes = True
+                    NodeTree = mat.node_tree
 
                     if naming_method != 1:
                         # print('matname : %s'%matname)
@@ -964,20 +966,32 @@ BINARY FORMAT
                                 tex.use_preview_alpha = transp
 
                                 # then create texture slot
-                                tex_slot = mat.texture_slots.create(index=tex_norm)
-                                tex_slot.texture = tex
-                                tex_slot.texture_coords = 'UV'
-                                tex_slot.uv_layer = 'UV0'
-                                tex_slot.use_map_alpha = transp
-                                tex_slot.alpha_factor = alpha
-                                if tex_norm == NORMALS:
-                                    tex_slot.use_map_color_diffuse = False
-                                    tex_slot.use_map_normal = True
-                                    tex_slot.normal_factor = 1.0
-                                    tex_slot.bump_method = "BUMP_BEST_QUALITY"
+                                # Texture slots are currently broken due to replacement of internal engine
+                                # Attempting shader nodes instead
+                                if bpy.app.version >= (2, 80, 0):
+                                    tex_slot = mat.node_tree.nodes.new(type="ShaderNodeTexImage")
+                                    tex_slot.image = tex.image
+                                    tex_slot.name = img_name
+                                    tex_slot.location = (-500.0,300.0)
+                                    mat_shadernode = mat.node_tree.nodes.get("Principled BSDF")
+                                    mat_input = mat_shadernode.inputs[0]
+                                    tex_output = tex_slot.outputs[0]
+                                    mat.node_tree.links.new(input = mat_input, output = tex_output)
+                                else:
+                                    tex_slot.texture = tex
+                                    tex_slot = mat.texture_slots.create(index=tex_norm)
+                                    tex_slot.texture_mapping = 'UV'
+                                    tex_slot.uv_layer = 'UV0'
+                                    tex_slot.use_map_alpha = transp
+                                    tex_slot.alpha_factor = alpha
+                                    if tex_norm == NORMALS:
+                                        tex_slot.use_map_color_diffuse = False
+                                        tex_slot.use_map_normal = True
+                                        tex_slot.normal_factor = 1.0
+                                        tex_slot.bump_method = "BUMP_BEST_QUALITY"
 
-                        # mat.name = first_texture_name
-                        # first_texture_name = ""
+                        #mat.name = first_texture_name
+                        #first_texture_name = ""
 
                 print("materials_slot_dictionary:{}"
                       "".format(materials_slot_dictionary))
@@ -1101,3 +1115,4 @@ BINARY FORMAT
         rootTokens = []
 
     return {'FINISHED'}
+

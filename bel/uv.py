@@ -64,9 +64,12 @@ def flatwrite(me, uvs, matimage=False):
         # flatuv = list( range(len(uvlayer) * 2) )
         # print('uvlist need : %s'%(len(flatuv)))
         uvlayer.foreach_set('uv', uvlist)
-
         newuvs.append(uv)
     # print('uvs in ',clock() - t)
+    # Workaround for Y-flipped UV map
+    for yi in range(len(newuvs[0].data)):
+        newuvs[0].data[yi].uv[1] = newuvs[0].data[yi].uv[1]*-1
+
     return newuvs
 
 
