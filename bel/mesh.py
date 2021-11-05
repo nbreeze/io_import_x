@@ -5,6 +5,10 @@ import mathutils
 from mathutils import *
 import bmesh
 
+# See <https://blender.stackexchange.com/a/195698>:
+from bpy_extras.image_utils import load_image
+from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
+
 from . import uv as buv
 from . import ob as bob
 
@@ -101,19 +105,39 @@ def write(obname, name,
             mat = bpy.data.materials[matname]
             me.materials.append(mat)
             texslot_nb = None
-            if hasattr(mat, 'texture_slots'):
-                texslot_nb = len(mat.texture_slots)
-                # ^ texture_slots is only available in workspace render
-                #   (formerly Blender internal)
-            if texslot_nb:
-                texslot = mat.texture_slots[0]
-                if type(texslot) != type(None):
-                    tex = texslot.texture
-                    if tex.type == 'IMAGE':
-                        img = tex.image
-                        if type(img) != type(None):
-                            matimage.append(img)
-                            continue
+
+            if bpy.app.version >= (2, 80, 0):
+                mat.blend_method = 'BLEND'
+                # TODO: Test this!
+                # See <https://blender.stackexchange.com/questions/
+                # 195689/add-texture-slots-in-blender-2-8-special-
+                # cases>
+                # answer by scurest [Sep 25, 2020](
+                # https://blender.stackexchange.com/a/195698)
+                ma_wrap = PrincipledBSDFWrapper(mat,
+                                                is_readonly=False)
+                try:
+                    pass
+                    # TODO: image = load_image(...)
+                    #if ma_wrap.base_color_texture:
+                    #    ma_wrap.base_color_texture.image = image
+                except Exception as ex:
+                    print("load_image needs a filename")
+                    raise ex
+            else:
+                if hasattr(mat, 'texture_slots'):
+                    texslot_nb = len(mat.texture_slots)
+                    # ^ texture_slots is only available in workspace render
+                    #   (formerly Blender internal)
+                if texslot_nb:
+                    texslot = mat.texture_slots[0]
+                    if type(texslot) != type(None):
+                        tex = texslot.texture
+                        if tex.type == 'IMAGE':
+                            img = tex.image
+                            if type(img) != type(None):
+                                matimage.append(img)
+                                continue
             matimage.append(False)
 
     # uvs

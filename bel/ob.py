@@ -106,7 +106,11 @@ def removeData(data):
             bpy.data.meshes.remove(data)
         # lamp
         elif data_type in [PointLight, SpotLight, AreaLight, SunLight]:
-            bpy.data.lamps.remove(data)
+            if bpy.app.version >= (2, 80, 0):
+                pass
+                # TODO: Find 2.8 way.
+            else:
+                bpy.data.lamps.remove(data)
         # camera
         elif data_type == Camera:
             bpy.data.cameras.remove(data)

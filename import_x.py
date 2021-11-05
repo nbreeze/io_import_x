@@ -887,10 +887,6 @@ BINARY FORMAT
                         if bpy.app.version >= (2, 80, 0):
                             diffuse_color = vec3ToVec4(diffuse_color, alpha=alpha)
                         mat.diffuse_color = diffuse_color
-                        # The following were removed in 2.80
-                        # (<https://docs.blender.org/api/2.80/change_log.html?
-                        # highlight=diffuse_intensity>):
-                        # diffuse_intensity, emit
                         if bpy.app.version >= (2, 80, 0):
                             pass
                         else:
@@ -901,10 +897,16 @@ BINARY FORMAT
                         # convert it to a kind of intensity
 
                         if alpha != 1.0:
-                            mat.use_transparency = True
-                            mat.transparency_method = 'Z_TRANSPARENCY'
-                            mat.alpha = alpha
-                            mat.specular_alpha = 0
+                            if bpy.app.version >= (2, 80, 0):
+                                mat.blend_method = 'BLEND'
+                                # TODO: Find the 2.8 way (Blend the
+                                # whole object not just texture if alpha
+                                # attribute is present in the file)
+                            else:
+                                mat.use_transparency = True
+                                mat.transparency_method = 'Z_TRANSPARENCY'
+                                mat.alpha = alpha
+                                mat.specular_alpha = 0
                             transp = True
                         else:
                             transp = False

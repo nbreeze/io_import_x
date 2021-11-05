@@ -7,8 +7,28 @@ naming_method = 0   blender default (increment name)
 naming_method = 1   do nothing, abort creation and use existing
 naming_method = 2   create new, rename existing,
 naming_method = 3   create new, replace existing
+
+Poikilos says:
+Due to Blender 2.8, if this were used, it would need to have a copy
+that uses collections and be imported like:
+
+if bpy.app.version >= (2, 80, 0):
+    import collections as group
+else:
+    import group
+
+# Note that the version issue doesn't affect some ambiguously-named
+# "group" variables in io_import_x which refer to vertex groups.
+# However, note that the "group" member was removed from each of these:
+# - ClothCollisionSettings
+# - EffectorWeights
+# - FreestyleLineSet
+# - RigidBodyWorld
+# See <https://docs.blender.org/api/blender2.8/change_log.html>.
 '''
 
+if bpy.app.version >= (2, 80, 0):
+    raise RuntimeError(__doc__)
 
 def new(name, naming_method):
     if name in bpy.data.groups and naming_method:
