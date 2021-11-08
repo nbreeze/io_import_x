@@ -60,56 +60,72 @@ def applyShader(mat, config):
 
     ## MAT
 
-    mat.type = 'SURFACE'
+    if bpy.app.version >= (2, 80, 0):
+        pass
+        # TODO: Find Blender 2.8 way.
+    else:
+        mat.type = 'SURFACE'
     # diffuse
     mat.diffuse_color = Color((0.6, 0.6, 0.6))
-    mat.diffuse_intensity = 0.8
-    mat.diffuse_shader = 'LAMBERT'
+
+    if bpy.app.version >= (2, 80, 0):
+        pass
+        # TODO: Find the 2.8 way.
+    else:
+        mat.diffuse_intensity = 0.8
+        mat.diffuse_shader = 'LAMBERT'
     mat.use_diffuse_ramp = False
 
     # specular
     mat.specular_color = Color((1.0, 1.0, 1.0))
     mat.specular_intensity = 0.25
-    mat.specular_shader = 'COOKTORR'
-    mat.use_specular_ramp = False
-    mat.specular_hardness = 1.0
 
     # shading
-    mat.emit = 0.0
-    mat.ambient = 0.5
-    mat.translucency = 0.0
-    mat.use_shadeless = False
-    mat.use_tangent_shading = False
-    mat.use_cubic = False
+    if bpy.app.version >= (2, 80, 0):
+        # See <https://docs.blender.org/api/blender2.8/change_log.html>
+        mat.blend_method = 'BLEND'
+        mat.shadow_method = 'CLIP'
+        # TODO: Find the 2.8 way.
+    else:
+        mat.specular_shader = 'COOKTORR'
+        mat.use_specular_ramp = False
+        mat.specular_hardness = 1.0
+        mat.emit = 0.0
+        mat.ambient = 0.5
+        # transparency
+        mat.use_transparency = alpha
+        mat.transparency_method = 'Z_TRANSPARENCY'
+        mat.alpha = not (alpha)
+        mat.specular_alpha = not (alpha)
+        mat.raytrace_transparency.fresnel = 0.0
+        mat.raytrace_transparency.fresnel_factor = 1.25
 
-    # transparency
-    mat.use_transparency = alpha
-    mat.transparency_method = 'Z_TRANSPARENCY'
-    mat.alpha = not (alpha)
-    mat.specular_alpha = not (alpha)
-    mat.raytrace_transparency.fresnel = 0.0
-    mat.raytrace_transparency.fresnel_factor = 1.25
+        # mirror
+        mat.raytrace_mirror.use = False
 
-    # mirror
-    mat.raytrace_mirror.use = False
+        # subsurface_scattering
+        mat.subsurface_scattering.use
 
-    # subsurface_scattering
-    mat.subsurface_scattering.use
+        # strand (mat.strand isn't in 2.8)
+        # options
+        # shadow
+        mat.use_shadows = True
+        mat.use_transparent_shadows = True
+        mat.use_cast_shadows_only = False
+        mat.shadow_cast_alpha = 1.0
+        mat.use_only_shadow = False
+        mat.shadow_only_type = 'SHADOW_ONLY_OLD'
+        mat.use_cast_buffer_shadows = True
+        mat.shadow_buffer_bias = 0.0
+        mat.use_ray_shadow_bias = True
+        mat.shadow_ray_bias = 0.0
+        mat.use_cast_approximate = True
+        mat.translucency = 0.0
+        mat.use_shadeless = False
+        mat.use_tangent_shading = False
+        mat.use_cubic = False
 
-    # strand
-    # options
-    # shadow
-    mat.use_shadows = True
-    mat.use_transparent_shadows = True
-    mat.use_cast_shadows_only = False
-    mat.shadow_cast_alpha = 1.0
-    mat.use_only_shadow = False
-    mat.shadow_only_type = 'SHADOW_ONLY_OLD'
-    mat.use_cast_buffer_shadows = True
-    mat.shadow_buffer_bias = 0.0
-    mat.use_ray_shadow_bias = True
-    mat.shadow_ray_bias = 0.0
-    mat.use_cast_approximate = True
+
 
     # TEXTURE SLOT 0
 
@@ -197,15 +213,39 @@ def BSshader(nodes, pointer):
         # print(AmbientColor)
         if DiffuseColor: mat.diffuse_color = Color(DiffuseColor)  # [0][0],DiffuseColor[0][1],DiffuseColor[0][2])
         if SpecularColor: mat.specular_color = Color(SpecularColor)  # [0][0],SpecularColor[0][1],SpecularColor[0][2])
-        if AmbientColor: mat.ambient = AmbientColor[0]  # source value is a vector3f with x=y=z
-        if EmissionColor: mat.emit = EmissionColor[0]  # source value is a vector3f with x=y=z
+        if AmbientColor:
+            if bpy.app.version >= (2, 80, 0):
+                pass
+                # TODO: Find the 2.8 way.
+            else:
+                mat.ambient = AmbientColor[0]  # source value is a vector3f with x=y=z
+        if EmissionColor:
+            if bpy.app.version >= (2, 80, 0):
+                pass
+                # TODO: Find the 2.8 way.
+            else:
+                mat.emit = EmissionColor[0]  # source value is a vector3f with x=y=z
+
         # if Shininess : mat.
         # alpha is a boolean, whereas Transparency is a float or False
         if Transparency:
-            mat.use_transparency = True
-            mat.transparency_method = 'Z_TRANSPARENCY'
-            mat.alpha = Transparency
-            mat.specular_alpha = 0
+            if bpy.app.version >= (2, 80, 0):
+                if Transparency:
+                    tex.blend_method = 'BLEND'
+                else:
+                    tex.blend_method = 'OPAQUE'
+                # TODO: Find the 2.8 way.
+                # - overall alpha (float) rather than texture
+                #   - See "Transparency is a float or False" above.
+                #   - Use alpha of color? See
+                #     <https://docs.blender.org/api/current/
+                #     bpy.types.Material.html>
+                # - specular alpha
+            else:
+                mat.specular_alpha = 0
+                mat.use_transparency = True
+                mat.transparency_method = 'Z_TRANSPARENCY'
+                mat.alpha = Transparency
             alpha = True
         else:
             alpha = False
@@ -259,16 +299,26 @@ def BSshader(nodes, pointer):
         if ShaderTextureName not in bpy.data.textures:
             tex = bpy.data.textures.new(name=ShaderTextureName, type='IMAGE')
             tex.image = img
-            tex.use_alpha = alpha
+            if bpy.app.version >= (2, 80, 0):
+                if alpha:
+                    tex.blend_method = 'BLEND'
+                else:
+                    tex.blend_method = 'OPAQUE'
+            else:
+                tex.use_alpha = alpha
             tex.use_preview_alpha = alpha
         else:
             tex = bpy.data.textures[ShaderTextureName]
 
-        texslot = mat.texture_slots.create(index=0)
-        texslot.texture = tex
-        texslot.texture_coords = 'UV'
-        texslot.uv_layer = 'UV0'
-        texslot.use_map_alpha = alpha
-        texslot.alpha_factor = 1.0
+        if bpy.app.version >= (2, 80, 0):
+            # TODO: Find Blender 2.8 way. (Set the UV map!)
+            pass
+        else:
+            texslot = mat.texture_slots.create(index=0)
+            texslot.texture = tex
+            texslot.texture_coords = 'UV'
+            texslot.uv_layer = 'UV0'
+            texslot.use_map_alpha = alpha
+            texslot.alpha_factor = 1.0
 
     return mat

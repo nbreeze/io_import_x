@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+
+## [git] - 2021-11-05
+### Fixed
+- Fix uses of Blender API that are deprecated as of 2.8: Search for
+  every "Removed" or "Renamed" feature in the entire [2.8
+  changelog](https://docs.blender.org/api/blender2.8/change_log.html)
+  other than `bpy.types.SpaceView3D`, `ThemeClipEditor`, `Theme*`
+  `ToolSettings`, `UILayout`, `WorldLighting`, `GPencil`,
+  `ParticleSettings`, `Text`, `SPHFluidSettings`, and other scene- or
+  render-related things that didn't seem to apply to io_import_x.
+
+
 ## [git] - 2021-03-31
 ### Changed
 - Update for Blender 2.80
